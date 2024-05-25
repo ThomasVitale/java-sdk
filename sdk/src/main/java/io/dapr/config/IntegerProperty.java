@@ -16,7 +16,7 @@ package io.dapr.config;
 /**
  * Integer configuration property.
  */
-public class IntegerProperty extends Property<Integer> {
+class IntegerProperty extends Property<Integer> {
 
   /**
    * {@inheritDoc}

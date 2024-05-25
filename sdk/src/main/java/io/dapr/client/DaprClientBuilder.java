@@ -42,6 +42,11 @@ public class DaprClientBuilder {
   private final DaprApiProtocol methodInvocationApiProtocol;
 
   /**
+   * Properties for configuring the DaprClient interaction with the Dapr sidecar.
+   */
+  private final DaprClientConfig daprClientConfig;
+
+  /**
    * Builder for Dapr's HTTP Client.
    */
   private final DaprHttpBuilder daprHttpBuilder;
@@ -57,21 +62,37 @@ public class DaprClientBuilder {
   private DaprObjectSerializer stateSerializer;
 
   /**
-   * Resiliency configuration for DaprClient.
-   */
-  private ResiliencyOptions resiliencyOptions;
-
-  /**
    * Creates a constructor for DaprClient.
    *
    * {@link DefaultObjectSerializer} is used for object and state serializers by default but is not recommended
    * for production scenarios.
    */
   public DaprClientBuilder() {
-    this.objectSerializer = new DefaultObjectSerializer();
-    this.stateSerializer = new DefaultObjectSerializer();
+    this(DaprClientConfig.builder()
+            .apiToken(Properties.API_TOKEN.get())
+            .endpoint(Properties.GRPC_ENDPOINT.get())
+            .maxRetries(Properties.MAX_RETRIES.get())
+            .timeout(Properties.TIMEOUT.get())
+            .build());
+  }
+
+  /**
+   * Creates a constructor for DaprClient.
+   *
+   * @param daprClientConfig Properties for configuring the interaction with the Dapr sidecar.
+   *
+   *     {@link DefaultObjectSerializer} is used for object and state serializers by default but is not recommended
+   *     for production scenarios.
+   */
+  public DaprClientBuilder(DaprClientConfig daprClientConfig) {
+    if (daprClientConfig == null) {
+      throw new IllegalArgumentException("daprClientConfig cannot be null");
+    }
+    this.daprClientConfig = daprClientConfig;
     this.apiProtocol = Properties.API_PROTOCOL.get();
     this.methodInvocationApiProtocol = Properties.API_METHOD_INVOCATION_PROTOCOL.get();
+    this.objectSerializer = new DefaultObjectSerializer();
+    this.stateSerializer = new DefaultObjectSerializer();
     this.daprHttpBuilder = new DaprHttpBuilder();
   }
 
@@ -116,9 +137,13 @@ public class DaprClientBuilder {
    *
    * @param options Serializer for objects to be persisted.
    * @return This instance.
+   *
+   * @deprecated Configure resiliency options via {@link DaprClientConfig} in the constructor.
    */
+  @Deprecated
   public DaprClientBuilder withResiliencyOptions(ResiliencyOptions options) {
-    this.resiliencyOptions = options;
+    this.daprClientConfig.setMaxRetries(options.getMaxRetries());
+    this.daprClientConfig.setTimeout(options.getTimeout());
     return this;
   }
 
@@ -176,7 +201,7 @@ public class DaprClientBuilder {
    * @throws java.lang.IllegalStateException if either host is missing or if port is missing or a negative number.
    */
   private DaprClient buildDaprClientGrpc() {
-    final ManagedChannel channel = NetworkUtils.buildGrpcManagedChannel();
+    final ManagedChannel channel = NetworkUtils.buildGrpcManagedChannel(this.daprClientConfig.getEndpoint().toString());
     final GrpcChannelFacade channelFacade = new GrpcChannelFacade(channel, this.daprHttpBuilder.build());
     DaprGrpc.DaprStub asyncStub = DaprGrpc.newStub(channel);
     return new DaprClientGrpc(
@@ -184,7 +209,7 @@ public class DaprClientBuilder {
         asyncStub,
         this.objectSerializer,
         this.stateSerializer,
-        this.resiliencyOptions);
+        new ResiliencyOptions(daprClientConfig.getTimeout(), daprClientConfig.getMaxRetries()));
   }
 
   /**

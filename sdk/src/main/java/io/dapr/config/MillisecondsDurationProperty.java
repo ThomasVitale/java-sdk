@@ -18,7 +18,7 @@ import java.time.Duration;
 /**
  * Integer configuration property.
  */
-public class MillisecondsDurationProperty extends Property<Duration> {
+class MillisecondsDurationProperty extends Property<Duration> {
 
   /**
    * {@inheritDoc}

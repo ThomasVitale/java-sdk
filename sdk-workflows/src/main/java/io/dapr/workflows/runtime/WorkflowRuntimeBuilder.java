@@ -14,6 +14,8 @@ limitations under the License.
 package io.dapr.workflows.runtime;
 
 import com.microsoft.durabletask.DurableTaskGrpcWorkerBuilder;
+import io.dapr.client.DaprClientConfig;
+import io.dapr.config.Properties;
 import io.dapr.utils.NetworkUtils;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.internal.ApiTokenClientInterceptor;
@@ -26,6 +28,7 @@ import java.util.Set;
 
 public class WorkflowRuntimeBuilder {
   private static volatile WorkflowRuntime instance;
+  private DaprClientConfig daprClientConfig;
   private DurableTaskGrpcWorkerBuilder builder;
   private Logger logger;
   private Set<String> workflows = new HashSet<String>();
@@ -38,12 +41,28 @@ public class WorkflowRuntimeBuilder {
    * Constructs the WorkflowRuntimeBuilder.
    */
   public WorkflowRuntimeBuilder() {
-    this(LoggerFactory.getLogger(WorkflowRuntimeBuilder.class));
+    this(DaprClientConfig.builder()
+            .apiToken(Properties.API_TOKEN.get())
+            .endpoint(Properties.GRPC_ENDPOINT.get())
+            .build(), LoggerFactory.getLogger(WorkflowRuntimeBuilder.class));
   }
 
-  WorkflowRuntimeBuilder(Logger logger) {
+  /**
+   * Constructs the WorkflowRuntimeBuilder.
+   *
+   * @param daprClientConfig Properties for configuring the interaction with the Dapr sidecar.
+   */
+  public WorkflowRuntimeBuilder(DaprClientConfig daprClientConfig) {
+    this(daprClientConfig, LoggerFactory.getLogger(WorkflowRuntimeBuilder.class));
+  }
+
+  WorkflowRuntimeBuilder(DaprClientConfig daprClientConfig, Logger logger) {
+    if (daprClientConfig == null) {
+      throw new IllegalArgumentException("daprClientConfig cannot be null");
+    }
     this.builder = new DurableTaskGrpcWorkerBuilder().grpcChannel(
-        NetworkUtils.buildGrpcManagedChannel(WORKFLOW_INTERCEPTOR));
+        NetworkUtils.buildGrpcManagedChannel(daprClientConfig.getEndpoint(), WORKFLOW_INTERCEPTOR));
+    this.daprClientConfig = daprClientConfig;
     this.logger = logger;
   }
 

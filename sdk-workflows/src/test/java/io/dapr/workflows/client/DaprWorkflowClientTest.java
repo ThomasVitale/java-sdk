@@ -16,6 +16,7 @@ package io.dapr.workflows.client;
 import com.microsoft.durabletask.DurableTaskClient;
 import com.microsoft.durabletask.OrchestrationMetadata;
 import com.microsoft.durabletask.OrchestrationRuntimeStatus;
+import io.dapr.client.DaprClientConfig;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowContext;
 import io.dapr.workflows.WorkflowStub;
@@ -55,7 +56,7 @@ public class DaprWorkflowClientTest {
   public static void beforeAll() {
     constructor =
         Constructor.class.cast(Arrays.stream(DaprWorkflowClient.class.getDeclaredConstructors())
-            .filter(c -> c.getParameters().length == 2).map(c -> {
+            .filter(c -> c.getParameters().length == 3).map(c -> {
               c.setAccessible(true);
               return c;
             }).findFirst().get());
@@ -67,12 +68,12 @@ public class DaprWorkflowClientTest {
     mockGrpcChannel = mock(ManagedChannel.class);
     when(mockGrpcChannel.shutdown()).thenReturn(mockGrpcChannel);
 
-    client = constructor.newInstance(mockInnerClient, mockGrpcChannel);
+    client = constructor.newInstance(DaprClientConfig.builder().build(), mockInnerClient, mockGrpcChannel);
   }
 
   @Test
   public void EmptyConstructor() {
-    assertDoesNotThrow(DaprWorkflowClient::new);
+    assertDoesNotThrow(() -> new DaprWorkflowClient());
   }
 
   @Test

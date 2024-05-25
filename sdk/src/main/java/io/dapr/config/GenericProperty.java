@@ -18,7 +18,7 @@ import java.util.function.Function;
 /**
  * Configuration property for any type.
  */
-public class GenericProperty<T> extends Property<T> {
+class GenericProperty<T> extends Property<T> {
 
   private final Function<String, T> parser;
 

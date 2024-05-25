@@ -16,7 +16,7 @@ package io.dapr.config;
 /**
  * String configuration property.
  */
-public class StringProperty extends Property<String> {
+class StringProperty extends Property<String> {
 
   /**
    * {@inheritDoc}

@@ -16,7 +16,7 @@ package io.dapr.config;
 /**
  * Boolean configuration property.
  */
-public class BooleanProperty extends Property<Boolean> {
+class BooleanProperty extends Property<Boolean> {
 
   /**
    * {@inheritDoc}

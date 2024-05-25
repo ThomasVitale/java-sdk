@@ -17,19 +17,13 @@ import com.microsoft.durabletask.DurableTaskClient;
 import com.microsoft.durabletask.DurableTaskGrpcClientBuilder;
 import com.microsoft.durabletask.OrchestrationMetadata;
 import com.microsoft.durabletask.PurgeResult;
-import io.dapr.client.Headers;
+import io.dapr.client.DaprClientConfig;
 import io.dapr.config.Properties;
 import io.dapr.utils.NetworkUtils;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.internal.ApiTokenClientInterceptor;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
 import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 
 import javax.annotation.Nullable;
 
@@ -42,6 +36,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DaprWorkflowClient implements AutoCloseable {
 
+  private DaprClientConfig daprClientConfig;
   private DurableTaskClient innerClient;
   private ManagedChannel grpcChannel;
 
@@ -49,25 +44,47 @@ public class DaprWorkflowClient implements AutoCloseable {
    * Public constructor for DaprWorkflowClient. This layer constructs the GRPC Channel.
    */
   public DaprWorkflowClient() {
-    this(NetworkUtils.buildGrpcManagedChannel(WORKFLOW_INTERCEPTOR));
+    this(DaprClientConfig.builder()
+            .apiToken(Properties.API_TOKEN.get())
+            .endpoint(Properties.GRPC_ENDPOINT.get())
+            .maxRetries(Properties.MAX_RETRIES.get())
+            .timeout(Properties.TIMEOUT.get())
+            .build());
+  }
+
+  /**
+   * Public constructor for DaprWorkflowClient. This layer constructs the GRPC Channel.
+   *
+   * @param daprClientConfig Properties for configuring the interaction with the Dapr sidecar.
+   */
+  public DaprWorkflowClient(DaprClientConfig daprClientConfig) {
+    this(daprClientConfig, NetworkUtils.buildGrpcManagedChannel(daprClientConfig.getEndpoint(), WORKFLOW_INTERCEPTOR));
   }
 
   /**
    * Private Constructor that passes a created DurableTaskClient and the new GRPC channel.
    *
+   * @param daprClientConfig Properties for configuring the interaction with the Dapr sidecar.
    * @param grpcChannel ManagedChannel for GRPC channel.
    */
-  private DaprWorkflowClient(ManagedChannel grpcChannel) {
-    this(createDurableTaskClient(grpcChannel), grpcChannel);
+  private DaprWorkflowClient(DaprClientConfig daprClientConfig, ManagedChannel grpcChannel) {
+    this(daprClientConfig, createDurableTaskClient(grpcChannel), grpcChannel);
   }
 
   /**
    * Private Constructor for DaprWorkflowClient.
    *
+   * @param daprClientConfig Properties for configuring the interaction with the Dapr sidecar.
    * @param innerClient DurableTaskGrpcClient with GRPC Channel set up.
    * @param grpcChannel ManagedChannel for instance variable setting.
    */
-  private DaprWorkflowClient(DurableTaskClient innerClient, ManagedChannel grpcChannel) {
+  private DaprWorkflowClient(DaprClientConfig daprClientConfig,
+                             DurableTaskClient innerClient,
+                             ManagedChannel grpcChannel) {
+    if (daprClientConfig == null) {
+      throw new IllegalArgumentException("daprClientConfig cannot be null");
+    }
+    this.daprClientConfig = daprClientConfig;
     this.innerClient = innerClient;
     this.grpcChannel = grpcChannel;
   }

@@ -49,5 +49,8 @@ hs_err_pid*
 /proto/dapr
 /proto/daprclient
 
+# Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
 # macOS
 .DS_Store

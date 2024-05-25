@@ -24,6 +24,14 @@ public final class ResiliencyOptions {
 
   private Integer maxRetries;
 
+  public ResiliencyOptions() {
+  }
+
+  public ResiliencyOptions(Duration timeout, Integer maxRetries) {
+    this.timeout = timeout;
+    this.maxRetries = maxRetries;
+  }
+
   public Duration getTimeout() {
     return timeout;
   }

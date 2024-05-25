@@ -13,7 +13,6 @@ limitations under the License.
 
 package io.dapr.internal.opencensus;
 
-import io.dapr.config.Property;
 import io.dapr.v1.DaprGrpc;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public final class GrpcWrapper {
 
-  private static final Logger LOGGER = Logger.getLogger(Property.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(GrpcWrapper.class.getName());
 
   /**
    * Binary formatter to generate grpc-trace-bin.

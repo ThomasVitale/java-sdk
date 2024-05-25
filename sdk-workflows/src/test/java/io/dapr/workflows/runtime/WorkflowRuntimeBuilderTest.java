@@ -13,6 +13,7 @@ limitations under the License.
 package io.dapr.workflows.runtime;
 
 
+import io.dapr.client.DaprClientConfig;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowStub;
 import org.junit.jupiter.api.Test;
@@ -63,8 +64,8 @@ public class WorkflowRuntimeBuilderTest {
 
     Logger testLogger = Mockito.mock(Logger.class);
 
-    assertDoesNotThrow(() -> new WorkflowRuntimeBuilder(testLogger).registerWorkflow(TestWorkflow.class));
-    assertDoesNotThrow(() -> new WorkflowRuntimeBuilder(testLogger).registerActivity(TestActivity.class));
+    assertDoesNotThrow(() -> new WorkflowRuntimeBuilder(DaprClientConfig.builder().build(), testLogger).registerWorkflow(TestWorkflow.class));
+    assertDoesNotThrow(() -> new WorkflowRuntimeBuilder(DaprClientConfig.builder().build(), testLogger).registerActivity(TestActivity.class));
 
     WorkflowRuntimeBuilder wfRuntime = new WorkflowRuntimeBuilder();
 
